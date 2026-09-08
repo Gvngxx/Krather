@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brain Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">LIVE ORGANISM BRAIN</p>
+          <h1>Brain Monitor</h1>
+          <p class="subtitle">La red muestra los ticks reales del laboratorio de vida artificial.</p>
+        </div>
+        <div class="status">
+          <span class="status-dot"></span>
+          <span id="networkStatus">CARGANDO RED</span>
+        </div>
+      </header>
+
+      <section class="control-panel" aria-label="Controles del laboratorio">
+        <button id="startButton" type="button">START</button>
+        <button id="stopButton" class="secondary" type="button">STOP</button>
+        <button id="resetButton" class="secondary" type="button">RESET</button>
+        <button id="generationButton" class="secondary" type="button">NEW GENERATION</button>
+      </section>
+
+      <section class="workspace">
+        <div class="graph-panel">
+          <div class="panel-heading">
+            <span>BRAIN SIGNAL MONITOR</span>
+            <span id="graphMeta">-- nodos / -- conexiones</span>
+          </div>
+          <div id="neuralCanvas" aria-label="Visualización de la red neuronal"></div>
+        </div>
+
+        <aside class="inspector brain-status">
+          <div class="panel-heading">LIVE STATE</div>
+          <dl class="state-list">
+            <dt>STATUS</dt><dd id="labStatus">IDLE</dd>
+            <dt>ORGANISM</dt><dd id="organismStatus">ALIVE</dd>
+            <dt>GENERATION</dt><dd id="generationValue">1</dd>
+            <dt>STEP</dt><dd id="stepValue">0</dd>
+            <dt>ENERGY</dt><dd id="energyValue">100.0</dd>
+            <dt>LAST ACTION</dt><dd id="actionValue">IDLE</dd>
+            <dt>REWARD</dt><dd id="rewardValue">0.0</dd>
+            <dt>AVG REWARD</dt><dd id="averageReward">0.0</dd>
+            <dt>FOOD EATEN</dt><dd id="foodEaten">0</dd>
+            <dt>LEARNED TICKS</dt><dd id="learnedTicks">0</dd>
+            <dt>WEIGHT UPDATES</dt><dd id="weightUpdates">0</dd>
+            <dt>ACTIVE LINKS</dt><dd id="activeConnections">0</dd>
+            <dt>NEAR-DEAD LINKS</dt><dd id="nearDeadConnections">0</dd>
+            <dt>AVG SIGNAL</dt><dd id="averageSignal">0.0</dd>
+            <dt>AVG WEIGHT CHANGE</dt><dd id="averageWeightChange">0.0</dd>
+          </dl>
+          <section class="memory-box" aria-labelledby="memoryTitle">
+            <div class="panel-heading" id="memoryTitle">RECUERDO</div>
+            <dl class="state-list memory-summary">
+              <dt>STORED</dt><dd id="memoryCount">0 / 120</dd>
+              <dt>LAST REWARD</dt><dd id="memoryReward">0.0</dd>
+              <dt>LAST ACTION</dt><dd id="memoryAction">IDLE</dd>
+              <dt>RESULT</dt><dd id="memoryResult">--</dd>
+            </dl>
+            <ol id="memoryRecent" class="memory-recent" aria-label="Últimos recuerdos"></ol>
+          </section>
+          <a class="lab-link" href="{{ url_for('lab') }}">OPEN LIFE LAB</a>
+        </aside>
+      </section>
+
+      <section class="terminal">
+        <div class="panel-heading">
+          <span>ACTIVITY LOG</span>
+          <span id="logState">READY</span>
+        </div>
+        <div id="logOutput" role="log">&gt; Sistema listo. Esperando...</div>
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Artificial Life Lab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body class="life-page">
+    <main class="life-shell">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">ARTIFICIAL LIFE / SHARED BRAIN</p>
+          <h1>Life Lab</h1>
+          <p class="subtitle">El organismo usa la red neuronal que puedes observar en el monitor.</p>
+        </div>
+        <a class="monitor-link" href="{{ url_for('index') }}">BRAIN MONITOR</a>
+      </header>
+
+      <section class="life-controls" aria-label="Controles de simulación">
+        <button id="labStart" type="button">START</button>
+        <button id="labStop" class="secondary" type="button">STOP</button>
+        <button id="labReset" class="secondary" type="button">RESET</button>
+        <button id="labGeneration" class="secondary" type="button">NEW GENERATION</button>
+      </section>
+
+      <section class="life-layout">
+        <div class="world-panel">
+          <div class="panel-heading">
+            <span>WORLD 01</span>
+            <span id="lifeState">STOPPED</span>
+          </div>
+          <div id="lifeWorld" class="life-world" aria-label="Mundo de vida artificial">
+            <div id="food" class="food" aria-label="Comida"></div>
+            <div id="organism" class="organism" aria-label="Organismo"></div>
+            <div id="deathBurst" class="death-burst" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <aside class="life-stats">
+          <div class="panel-heading">SIMULATION STATE</div>
+          <dl class="state-list">
+            <dt>ORGANISM</dt><dd id="lifeOrganism">ALIVE</dd>
+            <dt>GENERATION</dt><dd id="lifeGeneration">1</dd>
+            <dt>STEP</dt><dd id="lifeStep">0</dd>
+            <dt>ENERGY</dt><dd id="lifeEnergy">100.0</dd>
+            <dt>SIZE / WEIGHT</dt><dd id="lifeBody">18.0 / 1.0</dd>
+            <dt>NO FOOD TICKS</dt><dd id="lifeHunger">0</dd>
+            <dt>ORGANISMS</dt><dd id="lifeOrganisms">1</dd>
+            <dt>REWARD</dt><dd id="lifeReward">0.0</dd>
+            <dt>TOTAL REWARD</dt><dd id="lifeTotalReward">0.0</dd>
+            <dt>FOOD EATEN</dt><dd id="lifeFoodEaten">0</dd>
+            <dt>WEIGHT UPDATES</dt><dd id="lifeWeightUpdates">0</dd>
+          </dl>
+          <p class="learning-note">LEARNING SAVED LIVE<br /><span id="lifeLearnedTicks">0</span> ticks recorded</p>
+        </aside>
+      </section>
+    </main>
+    <script src="{{ url_for('static', filename='lab.js') }}"></script>
+  </body>
+</html>
