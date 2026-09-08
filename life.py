@@ -7,6 +7,7 @@ import threading
 import time
 import zlib
 from copy import deepcopy
+import numpy as np
 
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -289,12 +290,25 @@ class LifeSimulation:
                 }
                 after_distance = math.hypot(self.food["x"] - organism.x, self.food["y"] - organism.y)
                 distance_progress = before_distance - after_distance
-                # Reward por no cambiar de distancia
-                reward = 0.05 + max(-1.0, min(1.0, distance_progress / 20.0))
+                # Reward basado únicamente en el progreso real hacia la comida.
+                # Acercarse = recompensa positiva progresiva.
+                # Alejarse = penalización progresiva.
+                # No avanzar hacia la comida = 0 reward.
+                if distance_progress > 0:
+                    # Mientras más distancia recorra hacia la comida,
+                    # mayor recompensa, hasta un máximo de +0.20 20 de rewards.
+                    reward = min(0.20, max(0.01, distance_progress / 0.50))
+                elif distance_progress < 0:
+                    # Alejarse de la comida produce una penalización.
+                    # Cuanto más se aleje, mayor será la penalización,
+                    # hasta un máximo de -0.90 90 de penalisacion.
+                    reward = max(-0.90, min(-0.05, distance_progress / 0.20))
+                else:
+                    reward = 0.0
                 ate_food = after_distance <= organism.size + 8.0
                 if ate_food:
-                    # Reward +10 despues de comer
-                    reward += 10.0
+                    # Reward +20 despues de comer
+                    reward += 2.00
                     organism.energy = min(160.0, organism.energy + 42.0)
                     organism.size = min(34.0, organism.size + 1.5)
                     organism.weight += 0.08
@@ -310,10 +324,10 @@ class LifeSimulation:
                 if organism.no_food_ticks > 180 or organism.energy <= 0:
                     organism.energy = max(0.0, organism.energy)
                     organism.alive = False
-                    reward = -20.0
+                    reward = -4.00
                     terminal = True
                 memory_baseline = self.memory.reward_baseline()
-                learning_reward = reward + (reward - memory_baseline) * 0.15
+                learning_reward = float(np.clip(reward, -4.00, 2.00))
                 brain.update({"moved": moved, "reward": reward, "ate_food": ate_food, "organism_id": organism.organism_id})
                 self.memory.remember(
                     sensors,

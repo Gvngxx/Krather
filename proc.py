@@ -3,7 +3,6 @@ import numpy as np
 INPUT_NODE = "INPUT"
 OUTPUT_NODE = "OUTPUT"
 
-
 class Neuron:
     def __init__(self, id_name, bias=0.0):
         self.id_name = id_name
@@ -27,7 +26,6 @@ class Neuron:
             "weighted_sum": self.weighted_sum,
         }
 
-
 class Connection:
     def __init__(self, source, target, weight):
         self.source = source
@@ -45,14 +43,12 @@ class Connection:
             "weighted_signal": self.weighted_signal,
         }
 
-
 ACTIVATION_FUNCTIONS = {
     "LINEAR": lambda value: value,
     "RELU": lambda value: np.maximum(0.0, value),
     "SIGMOID": lambda value: 1.0 / (1.0 + np.exp(-value)),
     "TANH": np.tanh,
 }
-
 
 network = [
     Neuron("N1"),
@@ -70,32 +66,30 @@ network = [
     Neuron("N13"),
     Neuron("N14"),
 ]
-
 network_by_id = {neuron.id_name: neuron for neuron in network}
-
 connections = [
-    Connection(INPUT_NODE, "N1", 0.8),
+    Connection(INPUT_NODE, "N1", 0.6),
 
-    Connection("N1", "N2", 1.5),
-    Connection("N1", "N3", -1.5),
+    Connection("N1", "N2", 1.1),   #
+    Connection("N1", "N3", -1.1),
 
-    Connection("N2", "N4", 1.6),
-    Connection("N3", "N5", 1.7),
-    Connection("N4", "N10", -1.5),
+    Connection("N2", "N4", 0.8),   #
+    Connection("N3", "N5", 0.8),
+    Connection("N4", "N10", -0.6),  #
 
-    Connection("N5", "N7", 1.5),
-    Connection("N5", "N9", -1.6),
+    Connection("N5", "N7", 1.1),
+    Connection("N5", "N9", -1.2),
 
-    Connection("N5", "N6", 1.6),
-    Connection("N5", "N8", 1.7),
+    Connection("N5", "N6", 1.2),
+    Connection("N5", "N8", 1.2),
 
-    Connection("N10", "N11", 1.4),
-    Connection("N11", "N12", 1.4),
+    Connection("N10", "N11", 1.1), #
+    Connection("N11", "N12", 1.1), #
 
-    Connection("N13", "N14", 1.8),
+    Connection("N13", "N14", 1.2), #
 
-    Connection("N12", "N13", 1.4),
-    Connection("N13", OUTPUT_NODE, 0.8),
+    Connection("N12", "N13", 1.1), #
+    Connection("N13", OUTPUT_NODE, 0.6),
 ]
 LEARNING_RATE = 0.03
 WEIGHT_LIMIT = 2.0
@@ -118,25 +112,20 @@ learning_stats = {
     "reward_last_10": 0.0,
 }
 
-
 def get_neuron_count():
     return len(network)
-
 
 def _serialize_neuron(neuron):
     return neuron.to_dict()
 
-
 def _serialize_connection(connection):
     return connection.to_dict()
-
 
 def serialize_brain():
     return {
         "neurons": [_serialize_neuron(neuron) for neuron in network],
         "connections": [_serialize_connection(connection) for connection in connections],
     }
-
 
 def restore_brain(payload):
     for saved_neuron in payload.get("neurons", []):
@@ -156,12 +145,10 @@ def restore_brain(payload):
         connection.signal = float(saved_connection.get("signal", 0.0))
         connection.weighted_signal = float(saved_connection.get("weighted_signal", 0.0))
 
-
 def serialize_learning():
     serialized = dict(learning_stats)
     serialized["reward_history"] = list(learning_stats["reward_history"])
     return serialized
-
 
 def restore_learning(payload):
     for key in learning_stats:
@@ -173,7 +160,6 @@ def restore_learning(payload):
             else:
                 learning_stats[key] = float(payload[key])
 
-
 def _bounded_update(connection, delta):
     """Apply a small update while preserving an active route's direction."""
     old_weight = connection.weight
@@ -183,7 +169,6 @@ def _bounded_update(connection, delta):
         proposed_weight = float(np.copysign(MIN_ACTIVE_WEIGHT, old_weight))
     connection.weight = proposed_weight
     return proposed_weight - old_weight
-
 
 def learn_from_reward(reward, learning_rate=LEARNING_RATE, terminal=False):
     """Apply small reward-modulated updates only to connections that carried signal."""
@@ -204,7 +189,15 @@ def learn_from_reward(reward, learning_rate=LEARNING_RATE, terminal=False):
         target_activation = target.activation if target is not None else source_signal
         participation = float(np.clip(source_signal * target_activation, -1.0, 1.0))
         reward_factor = -1.35 if terminal else normalized_reward
-        delta = learning_rate * reward_factor * participation
+
+        # Delta acction
+        if reward > 0:
+            delta = learning_rate * normalized_reward * participation
+        elif reward < 0:
+            delta = -learning_rate * abs(normalized_reward) * participation
+        else:
+            delta = 0.0
+
         total_delta += _bounded_update(connection, delta)
 
     for neuron in network:
@@ -237,14 +230,12 @@ def learn_from_reward(reward, learning_rate=LEARNING_RATE, terminal=False):
         "average_signal": learning_stats["average_signal"],
     }
 
-
 def _all_nodes():
     nodes = {INPUT_NODE, OUTPUT_NODE}
     nodes.update(neuron.id_name for neuron in network)
     nodes.update(connection.source for connection in connections)
     nodes.update(connection.target for connection in connections)
     return nodes
-
 
 def _topological_layers():
     nodes = _all_nodes()
@@ -269,7 +260,6 @@ def _topological_layers():
 
     return layers
 
-
 def get_config():
     layers = _topological_layers()
     known_neurons = {neuron.id_name: neuron for neuron in network}
@@ -292,7 +282,6 @@ def get_config():
         "activation_functions": list(ACTIVATION_FUNCTIONS.keys()),
         "default_activation": "LINEAR",
     }
-
 
 def send_signal(input_signal, activation_name="LINEAR"):
     activation_name = activation_name.upper()
@@ -410,7 +399,6 @@ def send_signal(input_signal, activation_name="LINEAR"):
         "output_reached": reached_output,
     }
 
-
 def process_sensors(sensors, activation_name="TANH"):
     """Encode the organism sensors through the existing neural network."""
     encoded_input = (
@@ -423,7 +411,7 @@ def process_sensors(sensors, activation_name="TANH"):
     neuron_values = {neuron["id"]: neuron["activation"] for neuron in result["neurons"]}
     if result["output_reached"]:
         output_x = float(np.tanh(result["final_output"] * 1.15))
-        output_y = float(np.tanh(neuron_values.get("N3", 0.0) * 6.0))
+        output_y = float(np.tanh(neuron_values.get("N12", 0.0) * 6.0))
     else:
         output_x = 0.0
         output_y = 0.0
