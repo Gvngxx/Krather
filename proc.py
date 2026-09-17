@@ -197,7 +197,6 @@ def learn_from_reward(reward, learning_rate=LEARNING_RATE, terminal=False):
             delta = -learning_rate * abs(normalized_reward) * participation
         else:
             delta = 0.0
-
         total_delta += _bounded_update(connection, delta)
 
     for neuron in network:
@@ -418,6 +417,16 @@ def process_sensors(sensors, activation_name="TANH"):
     result["sensors"] = {key: float(value) for key, value in sensors.items()}
     result["encoded_input"] = encoded_input
     result["outputs"] = {"move_x": output_x, "move_y": output_y}
+    memory_neurons = {
+        node_id: float(neuron_values.get(node_id, 0.0))
+        for node_id in ("N6", "N7", "N8", "N9")
+    }
+    result["memory_neurons"] = memory_neurons
+    result["memory_signal"] = float(np.clip(
+        sum(abs(value) for value in memory_neurons.values()) / 4.0,
+        0.0,
+        1.0,
+    ))
     result["animation_ms"] = int(np.random.uniform(90.0, 260.0))
     result["learning_rate"] = LEARNING_RATE
     return result

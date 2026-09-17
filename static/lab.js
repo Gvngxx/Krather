@@ -5,6 +5,7 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("labStop").addEventListener("click", () => sendControl("stop"));
   document.getElementById("labReset").addEventListener("click", () => sendControl("reset"));
   document.getElementById("labGeneration").addEventListener("click", () => sendControl("generation"));
+  document.getElementById("labAuto").addEventListener("click", toggleAuto);
   pollState();
 });
 
@@ -13,6 +14,16 @@ async function sendControl(action) {
   if (!response.ok) return;
   const state = await response.json();
   updateWorld(state);
+}
+
+async function toggleAuto() {
+  const button = document.getElementById("labAuto");
+  const response = await fetch("/api/lab/auto", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled: button.getAttribute("aria-pressed") !== "true" }),
+  });
+  if (response.ok) updateWorld(await response.json());
 }
 
 async function pollState() {
@@ -60,7 +71,9 @@ function updateWorld(state) {
     world.appendChild(childElement);
   });
 
-  document.getElementById("lifeState").textContent = state.running ? "RUNNING" : dead ? "DEAD" : "STOPPED";
+  document.getElementById("lifeState").textContent = state.status === "GENERATION_COMPLETE"
+    ? `GENERATION COMPLETE / ${Number(state.next_generation_in || 0).toFixed(1)}s`
+    : state.running ? "RUNNING" : dead ? "DEAD" : "STOPPED";
   document.getElementById("lifeOrganism").textContent = dead ? "DEAD" : "ALIVE";
   document.getElementById("lifeGeneration").textContent = state.generation;
   document.getElementById("lifeStep").textContent = state.tick;
@@ -73,4 +86,37 @@ function updateWorld(state) {
   document.getElementById("lifeFoodEaten").textContent = state.food_eaten;
   document.getElementById("lifeWeightUpdates").textContent = state.learning.updates || 0;
   document.getElementById("lifeLearnedTicks").textContent = state.learning.total_ticks;
+  const autoButton = document.getElementById("labAuto");
+  autoButton.textContent = state.auto_generation ? "ON" : "OFF";
+  autoButton.setAttribute("aria-pressed", String(Boolean(state.auto_generation)));
+  const memory = state.memory || {};
+  const latest = memory.last;
+  const recalledAction = memory.latest_action || (latest && latest.action);
+  const recalledResult = memory.latest_result || (latest && latest.result);
+  document.getElementById("lifeMemoryCount").textContent = `${memory.count || 0} / ${memory.capacity || 0}`;
+  document.getElementById("lifeMemoryUsage").textContent = `${((memory.used_ratio || 0) * 100).toFixed(0)}%`;
+  document.getElementById("lifeMemoryReward").textContent = Number(memory.last_reward || 0).toFixed(2);
+  document.getElementById("lifeMemoryAverage").textContent = Number(memory.average_recent_reward || 0).toFixed(2);
+  document.getElementById("lifeMemorySignal").textContent = Number(memory.signal || 0).toFixed(2);
+  document.getElementById("lifeMemoryRecall").textContent = Number(memory.recall_strength || 0).toFixed(2);
+  document.getElementById("lifeMemoryValence").textContent = memory.valence || "NEUTRAL";
+  document.getElementById("lifeMemoryAction").textContent = recalledAction ? formatAction(recalledAction) : "IDLE";
+  document.getElementById("lifeMemoryResult").textContent = recalledResult ? formatMemoryResult(recalledResult) : "--";
+  document.getElementById("lifeMemoryRecent").replaceChildren(...(memory.recent || []).slice().reverse().map((entry) => {
+    const item = document.createElement("li");
+    item.textContent = `G${entry.generation ?? state.generation}  ${Number(entry.reward || 0).toFixed(1)}  ${formatMemoryResult(entry.result)}`;
+    return item;
+  }));
+}
+
+function formatAction(action) {
+  if (!action) return "IDLE";
+  return `(${Number(action.move_x || 0).toFixed(2)}, ${Number(action.move_y || 0).toFixed(2)})`;
+}
+
+function formatMemoryResult(result) {
+  if (!result) return "--";
+  if (result.ate_food) return "FOOD";
+  if (result.died) return "DEAD";
+  return result.moved > 0.01 ? "MOVED" : "STILL";
 }

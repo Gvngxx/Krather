@@ -22,6 +22,10 @@
         <button id="labStop" class="secondary" type="button">STOP</button>
         <button id="labReset" class="secondary" type="button">RESET</button>
         <button id="labGeneration" class="secondary" type="button">NEW GENERATION</button>
+        <div class="auto-control">
+          <span>AUTO</span>
+          <button id="labAuto" class="toggle" type="button" aria-pressed="false">OFF</button>
+        </div>
       </section>
 
       <section class="life-layout">
@@ -53,6 +57,21 @@
             <dt>WEIGHT UPDATES</dt><dd id="lifeWeightUpdates">0</dd>
           </dl>
           <p class="learning-note">LEARNING SAVED LIVE<br /><span id="lifeLearnedTicks">0</span> ticks recorded</p>
+          <section class="memory-box lab-memory" aria-labelledby="labMemoryTitle">
+            <div class="panel-heading" id="labMemoryTitle">RECUERDO</div>
+            <dl class="state-list memory-summary">
+              <dt>MEMORIES</dt><dd id="lifeMemoryCount">0 / 120</dd>
+              <dt>USAGE</dt><dd id="lifeMemoryUsage">0%</dd>
+              <dt>LAST REWARD</dt><dd id="lifeMemoryReward">0.0</dd>
+              <dt>AVG RECENT</dt><dd id="lifeMemoryAverage">0.0</dd>
+              <dt>MEMORY SIGNAL</dt><dd id="lifeMemorySignal">0.00</dd>
+              <dt>RECALL STRENGTH</dt><dd id="lifeMemoryRecall">0.00</dd>
+              <dt>VALENCE</dt><dd id="lifeMemoryValence">--</dd>
+              <dt>LATEST ACTION</dt><dd id="lifeMemoryAction">IDLE</dd>
+              <dt>LATEST RESULT</dt><dd id="lifeMemoryResult">--</dd>
+            </dl>
+            <ol id="lifeMemoryRecent" class="memory-recent" aria-label="Últimos recuerdos"></ol>
+          </section>
         </aside>
       </section>
     </main>

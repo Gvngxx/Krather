@@ -53,6 +53,15 @@ def lab_generation():
     life.simulation.new_generation()
     return jsonify(life.simulation.snapshot())
 
+@app.route("/api/lab/auto", methods=["POST"])
+def lab_auto():
+    payload = request.get_json(silent=True) or {}
+    enabled = payload.get("enabled")
+    if not isinstance(enabled, bool):
+        return jsonify({"error": "enabled debe ser booleano"}), 400
+    life.simulation.set_auto_generation(enabled)
+    return jsonify(life.simulation.snapshot())
+
 @app.route("/api/brain/state", methods=["GET"])
 def brain_state():
     state = life.simulation.snapshot()

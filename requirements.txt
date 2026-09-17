@@ -34,6 +34,7 @@ nvidia-nvjitlink==13.3.33
 nvidia-nvshmem-cu13==3.4.5
 nvidia-nvtx==13.0.85
 packaging==26.3
+pymunk==7.3.0
 pillow==12.3.0
 pyparsing==3.3.2
 python-dateutil==2.9.0.post0

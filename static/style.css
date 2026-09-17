@@ -8,6 +8,7 @@
   --cyan: #53d8e8;
   --amber: #ffc857;
   --danger: #ff6b6b;
+  --memory: #ff78bd;
 }
 
 * {
@@ -38,6 +39,18 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.memory-indicator {
+  margin-right: 12px;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.memory-indicator.is-active {
+  color: var(--memory);
+  text-shadow: 0 0 10px rgba(255, 120, 189, 0.8);
 }
 
 .page-header {
@@ -93,6 +106,29 @@ h1 {
   gap: 24px;
   padding: 16px 18px;
   margin-bottom: 18px;
+}
+
+.auto-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+button.toggle {
+  min-width: 66px;
+  padding: 0 12px;
+  background: transparent;
+  color: var(--muted);
+}
+
+button.toggle[aria-pressed="true"] {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: #17120a;
 }
 
 .control-group {
@@ -218,13 +254,37 @@ button.secondary:hover {
   opacity: 1;
 }
 
-.svg-node circle {
+.connection-group.memory-active .connection-line {
+  stroke: var(--memory);
+  filter: drop-shadow(0 0 calc(4px + 8px * var(--memory-intensity)) var(--memory));
+}
+
+.connection-group.memory-active .signal-pulse {
+  opacity: 1;
+  fill: var(--memory);
+  filter: drop-shadow(0 0 calc(5px + 10px * var(--memory-intensity)) var(--memory));
+  animation: memory-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes memory-pulse {
+  0%, 100% { r: 5px; opacity: 0.45; }
+  50% { r: calc(7px + 7px * var(--memory-intensity)); opacity: 1; }
+}
+
+.svg-node circle,
+.svg-node rect {
   fill: #172333;
   stroke: #51647d;
   stroke-width: 2;
   transition: fill 0.25s, stroke 0.25s, filter 0.25s, transform 0.2s ease;
   transform-box: fill-box;
   transform-origin: center;
+}
+
+.svg-node.memory-neuron rect {
+  fill: #4e2042;
+  stroke: var(--memory);
+  filter: drop-shadow(0 0 8px rgba(255, 120, 189, 0.45));
 }
 
 .svg-node text {
@@ -235,14 +295,23 @@ button.secondary:hover {
   pointer-events: none;
 }
 
-.svg-node.active circle {
+.svg-node.active circle,
+.svg-node.active rect {
   fill: #17414b;
   stroke: var(--cyan);
   filter: drop-shadow(0 0 16px rgba(83, 216, 232, 0.9));
   opacity: 1;
 }
 
-.svg-node.fading circle {
+.svg-node.memory-neuron.memory-active rect {
+  fill: #4e2042;
+  stroke: var(--memory);
+  filter: drop-shadow(0 0 calc(8px + 20px * var(--memory-intensity)) var(--memory));
+  transform: scale(calc(1 + 0.08 * var(--memory-intensity)));
+}
+
+.svg-node.fading circle,
+.svg-node.fading rect {
   fill: #27384a;
   stroke: #7ea7c4;
   filter: drop-shadow(0 0 6px rgba(106, 150, 196, 0.35));
@@ -254,14 +323,16 @@ button.secondary:hover {
   transition: opacity 10s ease;
 }
 
-.svg-node.isolated circle {
+.svg-node.isolated circle,
+.svg-node.isolated rect {
   fill: #5c1e2a;
   stroke: #ff7a7a;
   filter: drop-shadow(0 0 18px rgba(255, 110, 110, 0.9));
   opacity: 1;
 }
 
-.svg-node.isolated.fading circle {
+.svg-node.isolated.fading circle,
+.svg-node.isolated.fading rect {
   fill: #3a1d27;
   stroke: #ff9d9d;
   filter: drop-shadow(0 0 9px rgba(255, 140, 140, 0.8));
@@ -432,6 +503,10 @@ button.secondary:hover {
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 18px;
+}
+
+.life-controls .auto-control {
+  margin-left: auto;
 }
 
 .life-layout {

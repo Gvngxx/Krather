@@ -23,10 +23,26 @@ async function initNetwork() {
     document.getElementById("stopButton").addEventListener("click", () => controlLab("stop"));
     document.getElementById("resetButton").addEventListener("click", () => controlLab("reset"));
     document.getElementById("generationButton").addEventListener("click", () => controlLab("generation"));
+    document.getElementById("autoGeneration").addEventListener("click", toggleAuto);
     pollBrainState();
     setStatus("RED LISTA");
   } catch (error) {
     setStatus("ERROR DE RED");
+    appendLog(error.message);
+  }
+}
+
+async function toggleAuto() {
+  const button = document.getElementById("autoGeneration");
+  try {
+    const response = await fetch("/api/lab/auto", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: button.getAttribute("aria-pressed") !== "true" }),
+    });
+    if (!response.ok) throw new Error("No se pudo cambiar AUTO");
+    updateMonitor(await response.json());
+  } catch (error) {
     appendLog(error.message);
   }
 }
@@ -149,20 +165,21 @@ function renderGraph(config) {
   });
 
   Object.entries(positions).forEach(([id, position]) => {
+    const isMemoryNeuron = ["N6", "N7", "N8", "N9"].includes(id);
     const nodeGroup = createSvg("g", {
-      class: "svg-node",
+      class: `svg-node${isMemoryNeuron ? " memory-neuron" : ""}`,
       id: nodeId(id),
       transform: `translate(${position.x} ${position.y})`,
       "data-node-id": id,
     });
 
-    const circle = createSvg("circle", {
-      r: id === "INPUT" || id === "OUTPUT" ? "34" : "39",
-    });
+    const shape = isMemoryNeuron
+      ? createSvg("rect", { x: "-39", y: "-39", width: "78", height: "78", rx: "4" })
+      : createSvg("circle", { r: id === "INPUT" || id === "OUTPUT" ? "34" : "39" });
     const label = createSvg("text", { class: "node-label", y: "5" });
     label.textContent = id;
 
-    nodeGroup.append(circle, label);
+    nodeGroup.append(shape, label);
     graphLayer.appendChild(nodeGroup);
 
     nodeGroup.addEventListener("pointerdown", (event) => {
@@ -388,7 +405,9 @@ function updateMonitor(state) {
   }
   lastOrganismAlive = organismAlive;
 
-  document.getElementById("labStatus").textContent = running ? "RUNNING" : "STOPPED";
+  document.getElementById("labStatus").textContent = state.status === "GENERATION_COMPLETE"
+    ? `GENERATION COMPLETE / ${Number(state.next_generation_in || 0).toFixed(1)}s`
+    : running ? "RUNNING" : "STOPPED";
   document.getElementById("organismStatus").textContent = organismAlive ? "ALIVE" : "DEAD";
   document.getElementById("generationValue").textContent = state.generation ?? 1;
   document.getElementById("stepValue").textContent = state.tick ?? 0;
@@ -403,9 +422,42 @@ function updateMonitor(state) {
   document.getElementById("nearDeadConnections").textContent = state.learning?.near_dead_connections ?? 0;
   document.getElementById("averageSignal").textContent = format(state.learning?.average_signal ?? 0, 2);
   document.getElementById("averageWeightChange").textContent = format(state.learning?.average_weight_change ?? 0, 4);
+  const autoButton = document.getElementById("autoGeneration");
+  autoButton.textContent = state.auto_generation ? "ON" : "OFF";
+  autoButton.setAttribute("aria-pressed", String(Boolean(state.auto_generation)));
+  document.getElementById("brainMemoryCount").textContent = `${state.memory?.count ?? 0} / ${state.memory?.capacity ?? 0}`;
+  document.getElementById("brainMemoryAverage").textContent = format(state.memory?.average_recent_reward ?? 0, 2);
+  const memorySignal = Number(state.memory?.signal ?? 0);
+  document.getElementById("brainMemorySignal").textContent = format(memorySignal, 2);
+  document.getElementById("graphMeta").textContent = `${networkConfig.neurons.length + 2} nodos / ${networkConfig.connections.length} conexiones · G${state.generation ?? 1} · R${format(state.reward ?? 0, 2)} · M${state.memory?.count ?? 0}`;
+  updateMemoryVisualization(state.memory, state.brain);
   updateMemory(state.memory);
   updateConnectionWeights(state.brain?.connections || []);
   setStatus(running ? "CEREBRO EJECUTANDO" : organismAlive ? "RED LISTA" : "ORGANISMO MUERTO");
+}
+
+function updateMemoryVisualization(memory, brain) {
+  const signal = Math.max(0, Math.min(1, Number(memory?.signal ?? 0)));
+  const indicator = document.getElementById("memoryIndicator");
+  if (indicator) {
+    indicator.textContent = signal > 0 ? `MEMORY ${format(signal, 2)}` : "MEMORY OFF";
+    indicator.classList.toggle("is-active", signal > 0);
+  }
+
+  const neuronValues = memory?.neurons || brain?.memory_neurons || {};
+  ["N6", "N7", "N8", "N9"].forEach((id) => {
+    const node = document.getElementById(nodeId(id));
+    const intensity = signal > 0 ? Math.max(0, Math.min(1, Math.abs(Number(neuronValues[id] || 0)))) : 0;
+    if (!node) return;
+    node.classList.toggle("memory-active", intensity > 0);
+    node.style.setProperty("--memory-intensity", intensity.toFixed(3));
+  });
+
+  document.querySelectorAll(".connection-group").forEach((group) => {
+    const isMemoryRoute = ["N6", "N7", "N8", "N9"].includes(group.dataset.target);
+    group.classList.toggle("memory-active", isMemoryRoute && signal > 0);
+    group.style.setProperty("--memory-intensity", signal.toFixed(3));
+  });
 }
 
 function updateMemory(memory) {
